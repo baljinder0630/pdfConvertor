@@ -7,7 +7,7 @@ function DragDrop() {
     const [file, setFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false); // Loading state
     const [error, setError] = useState(null); // Error handling
-
+    const [isPasswordEnabled, setIsPasswordEnabled] = useState(false);
     const handleChange = (uploadedFile) => {
         setFile(uploadedFile);
         setError(null); // Clear errors on new file upload
@@ -21,6 +21,7 @@ function DragDrop() {
         try {
             const formData = new FormData();
             formData.append("file", file);
+            formData.append("password", isPasswordEnabled ? document.getElementById("password").value : "");
 
             const response = await fetch("http://localhost:3000/api/convertFile", {
                 method: "POST",
@@ -73,6 +74,35 @@ function DragDrop() {
                                 <strong className="text-gray-800">Type:</strong> {file.type}
                             </p>
                         </div>
+                    </div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 my-2">
+                        Enter Password
+                    </label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        disabled={!isPasswordEnabled}
+                        placeholder="Enter a secure password"
+                        className={`flex w-full px-4 py-2 border rounded-md focus:outline-none ${isPasswordEnabled
+                            ? "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            : "bg-gray-200 cursor-not-allowed"
+                            }`}
+                    />
+
+                    {/* Checkbox for Enabling/Disabling Password */}
+                    <div className="mt-4 flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            name="passwordToggle"
+                            id="passwordToggle"
+                            checked={isPasswordEnabled}
+                            onChange={() => setIsPasswordEnabled(!isPasswordEnabled)}
+                            className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="passwordToggle" className="text-sm font-medium text-gray-700">
+                            Enable Password Protection
+                        </label>
                     </div>
                     <button
                         type="submit"
