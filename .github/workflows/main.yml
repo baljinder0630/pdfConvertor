@@ -1,0 +1,59 @@
+name: React Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy React App
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Add AWS VM's host key to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.AWS_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy code to AWS VM
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.AWS_VM_HOST }}
+          username: ${{ secrets.AWS_VM_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: .
+          target: /home/${{ secrets.AWS_VM_USERNAME }}/prod/frontend
+
+      - name: Copy env
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private-key.pem
+          chmod 600 private-key.pem
+
+          ssh -i private-key.pem ${{ secrets.AWS_VM_USERNAME }}@${{ secrets.AWS_VM_HOST }} -o StrictHostKeyChecking=no << 'ENDSSH'
+            cd /home/${{ secrets.AWS_VM_USERNAME }}/prod/frontend
+            touch .env
+            cp /home/${{ secrets.AWS_VM_USERNAME }}/prod/react/.env /home/${{ secrets.AWS_VM_USERNAME }}/prod/frontend/.env
+          ENDSSH
+
+      - name: Build and run React Docker image on AWS VM
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private-key.pem
+          chmod 600 private-key.pem
+
+          ssh -i private-key.pem ${{ secrets.AWS_VM_USERNAME }}@${{ secrets.AWS_VM_HOST }} -o StrictHostKeyChecking=no << 'ENDSSH'
+            cd /home/${{ secrets.AWS_VM_USERNAME }}/prod/frontend
+            sudo docker ps --filter "ancestor=prod-frontend" -q | xargs -r docker stop
+            sudo docker build -t prod-frontend .  # Build the React app Docker image
+            sudo docker images
+            sudo docker run --rm -d -p 3002:3000 --init prod-frontend  # Run on port 3002
+            sudo docker ps
+            echo "React deployment complete"
+          ENDSSH
