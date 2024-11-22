@@ -23,7 +23,7 @@ function DragDrop() {
             formData.append("file", file);
             formData.append("password", isPasswordEnabled ? document.getElementById("password").value : "");
 
-            const response = await fetch("http://localhost:3000/api/convertFile", {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/convertFile`, {
                 method: "POST",
                 body: formData,
             });
