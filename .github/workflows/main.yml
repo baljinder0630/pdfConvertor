@@ -53,7 +53,7 @@ jobs:
             sudo docker ps --filter "ancestor=prod-frontend" -q | xargs -r docker stop
             sudo docker build -t prod-frontend .  # Build the React app Docker image
             sudo docker images
-            sudo docker run --rm -d -p 3002:3000 --init prod-frontend  # Run on port 3002
+            sudo docker run --rm -d -p 3002:5173 --init prod-frontend  # Run on port 3002
             sudo docker ps
             echo "React deployment complete"
           ENDSSH
